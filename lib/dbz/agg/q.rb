@@ -1,6 +1,9 @@
 module Dbz
   class Agg
     class Q
+
+      CAPACITY = 5
+
       def initialize(cap)
         @arr, @cap, @lock, @cond = [], cap, Mutex.new, ConditionVariable.new
       end
@@ -15,12 +18,24 @@ module Dbz
 
       def shift
         e = nil
+        deq{ e = @arr.shift }
+        e
+      end
+
+      def batch_shift(max: CAPACITY)
+        b = []
+        deq{ b << @arr.shift until @arr.empty? || b.size >= max }
+        b
+      end
+
+      private
+
+      def deq
         @lock.synchronize do
           @cond.wait(@lock) while @arr.empty?
-          e = @arr.shift
+          yield
           @cond.signal
         end
-        e
       end
     end
   end
