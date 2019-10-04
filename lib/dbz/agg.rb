@@ -5,5 +5,21 @@ require 'dbz/agg/q'
 
 module Dbz
   class Agg
+
+    attr_reader :queue
+
+    def initialize(addrs: ['kafka:9092'], id: '', topics: [], capacity: 5)
+      kafka = Kafka.new(addrs, client_id: id)
+      @consumer = kafka.consumer(group_id: id)
+      Array(topics).each{ |t| @consumer.subscribe(t) }
+      @queue = Q.new(capacity)
+
+      Thread.new do
+        @consumer.each_message do |msg|
+          @queue.push Msg.new(msg)
+        end
+      end
+    end
+
   end
 end
