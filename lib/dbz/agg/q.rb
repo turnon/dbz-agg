@@ -28,6 +28,19 @@ module Dbz
         b
       end
 
+      def group_shift(max: CAPACITY)
+        group = Hash.new{ |h, k| h[k] = [] }
+
+        deq do
+          until @arr.empty? || group.size >= max
+            msg = @arr.shift
+            group[msg.key] << msg
+          end
+        end
+
+        group
+      end
+
       private
 
       def deq
